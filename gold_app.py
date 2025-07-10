@@ -113,13 +113,13 @@ class GoldTransactionApp:
     
     def calculate_gold_value(self, weight, karat):
         """Calculate gold value using the formula: weight * (karat / 750)"""
-        return weight * (karat / 750)
+        return round(weight * (karat / 750), 3)
     
     def calculate_total_price_buy(self, price_per_methqal, karat, weight, wage):
         """Calculate total price for buy transaction"""
         base_price = (price_per_methqal / self.METHQAL_TO_GRAM) * (karat / 750) * weight
         total_price = base_price + (base_price * wage / 100)
-        return round(total_price, 2)
+        return round(total_price, 0)
     
     def calculate_total_price_sell(self, price_per_gram, karat, weight, wage, profit, tax):
         """Calculate total price for sell transaction"""
@@ -127,9 +127,9 @@ class GoldTransactionApp:
         wage_amount = base_price * wage / 100
         base_with_wage = base_price + wage_amount
         profit_amount = base_with_wage * profit / 100
-        tax_amount = profit_amount * tax / 100
+        tax_amount = (profit_amount + wage_amount) * tax / 100
         total_price = base_price + wage_amount + profit_amount + tax_amount
-        return round(total_price, 2)
+        return round(total_price, 0)
     
     def get_last_total_gold(self):
         """Get the total_gold from the last transaction"""
@@ -196,7 +196,7 @@ class GoldTransactionApp:
                 self.save_transaction('buy', date, weight, karat, price_per_gram, price_per_methqal, 
                                     wage, profit, tax, total_price, note, new_total_gold)
                 
-                messagebox.showinfo("موفق", f"خرید ثبت شد.\nقیمت هر گرم: {price_per_gram:,.0f} تومان\nقیمت کل: {total_price:,.0f} تومان\nموجودی جدید: {new_total_gold:.4f} گرم طلای خالص")
+                messagebox.showinfo("موفق", f"خرید ثبت شد.\nقیمت هر گرم: {price_per_gram:,.0f} تومان\nقیمت کل: {total_price:,.0f} تومان\nموجودی جدید: {new_total_gold:.3f} گرم طلای خالص")
                 dialog.destroy()
                 self.status_label.config(text="خرید جدید ثبت شد")
             except ValueError:
@@ -270,12 +270,12 @@ class GoldTransactionApp:
                 
                 # Check if selling more than available
                 if new_total_gold < 0:
-                    messagebox.showwarning("هشدار", f"موجودی فعلی: {last_total:.4f} گرم طلای خالص\nمقدار فروش: {gold_value:.4f} گرم طلای خالص\nموجودی منفی خواهد شد!")
+                    messagebox.showwarning("هشدار", f"موجودی فعلی: {last_total:.3f} گرم طلای خالص\nمقدار فروش: {gold_value:.3f} گرم طلای خالص\nموجودی منفی خواهد شد!")
                 
                 self.save_transaction('sell', date, weight, karat, price_per_gram, price_per_methqal, 
                                     wage, profit, tax, total_price, note, new_total_gold)
                 
-                messagebox.showinfo("موفق", f"فروش ثبت شد\nقیمت کل: {total_price:,.0f} تومان\nموجودی جدید: {new_total_gold:.4f} گرم طلای خالص")
+                messagebox.showinfo("موفق", f"فروش ثبت شد\nقیمت کل: {total_price:,.0f} تومان\nموجودی جدید: {new_total_gold:.3f} گرم طلای خالص")
                 dialog.destroy()
                 self.status_label.config(text="فروش جدید ثبت شد")
             except ValueError:
@@ -295,8 +295,8 @@ class GoldTransactionApp:
         # Get total_gold from the latest record
         latest_total_gold = float(transactions[-1]['total_gold']) if transactions[-1]['total_gold'] is not None else 0.0
         
-        messagebox.showinfo("موجودی", f"موجودی فعلی طلای خالص: {latest_total_gold:.4f} گرم")
-        self.status_label.config(text=f"موجودی: {latest_total_gold:.4f} گرم طلای خالص")
+        messagebox.showinfo("موجودی", f"موجودی فعلی طلای خالص: {latest_total_gold:.3f} گرم")
+        self.status_label.config(text=f"موجودی: {latest_total_gold:.3f} گرم طلای خالص")
     
     def show_all_transactions(self):
         """Show all transactions in a new window"""
@@ -360,7 +360,7 @@ class GoldTransactionApp:
                 trans.get('tax', 0),
                 f"{float(trans.get('total_price', 0)):,.0f}" if trans.get('total_price') else "0",
                 trans['note'],
-                f"{float(trans['total_gold']):.4f}" if trans['total_gold'] is not None else "0.0000"
+                f"{float(trans['total_gold']):.3f}" if trans['total_gold'] is not None else "0.0000"
             ))
         
         # Scrollbars

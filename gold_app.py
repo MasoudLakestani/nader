@@ -4,13 +4,23 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 from datetime import datetime
 import os
+import sys
 
 class GoldTransactionApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("مدیریت معاملات طلا")
-        self.root.geometry("600x500")
+        self.root.title("Gold Transaction Manager - مدیریت معاملات طلا")
+        self.root.geometry("700x600")
         self.root.configure(bg='#f0f0f0')
+        
+        # Set window icon (optional)
+        try:
+            self.root.iconbitmap(default='icon.ico')
+        except:
+            pass
+        
+        # Center the window on screen
+        self.center_window()
         
         # Constants
         self.FILE_NAME = 'transactions.xlsx'
@@ -22,16 +32,28 @@ class GoldTransactionApp:
         # Create GUI
         self.create_widgets()
         
+    def center_window(self):
+        """Center the window on screen"""
+        self.root.update_idletasks()
+        width = self.root.winfo_width()
+        height = self.root.winfo_height()
+        pos_x = (self.root.winfo_screenwidth() // 2) - (width // 2)
+        pos_y = (self.root.winfo_screenheight() // 2) - (height // 2)
+        self.root.geometry(f'{width}x{height}+{pos_x}+{pos_y}')
+        
     def init_file(self):
         """Create Excel file if it doesn't exist"""
-        if not os.path.exists(self.FILE_NAME):
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.title = "Transactions"
-            headers = ['type', 'date', 'weight', 'karat', 'price_per_gram', 'price_per_methqal', 'note']
-            ws.append(headers)
-            wb.save(self.FILE_NAME)
-            messagebox.showinfo("اطلاع", "فایل اکسل جدید ایجاد شد!")
+        try:
+            if not os.path.exists(self.FILE_NAME):
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.title = "Transactions"
+                headers = ['type', 'date', 'weight', 'karat', 'price_per_gram', 'price_per_methqal', 'note']
+                ws.append(headers)
+                wb.save(self.FILE_NAME)
+                messagebox.showinfo("Information", f"Excel file created successfully!\nFile location: {os.path.abspath(self.FILE_NAME)}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not create Excel file: {str(e)}")
     
     def create_widgets(self):
         # Main title

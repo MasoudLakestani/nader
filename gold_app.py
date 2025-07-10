@@ -48,7 +48,7 @@ class GoldTransactionApp:
                 wb = openpyxl.Workbook()
                 ws = wb.active
                 ws.title = "Transactions"
-                headers = ['type', 'date', 'weight', 'karat', 'price_per_gram', 'price_per_methqal', 'note']
+                headers = ['type', 'date', 'weight', 'karat', 'price_per_gram', 'price_per_methqal', 'note', 'total_gold']
                 ws.append(headers)
                 wb.save(self.FILE_NAME)
                 messagebox.showinfo("Information", f"Excel file created successfully!\nFile location: {os.path.abspath(self.FILE_NAME)}")
@@ -110,6 +110,17 @@ class GoldTransactionApp:
                                     font=("Arial", 10), bg='#f0f0f0')
         self.status_label.pack(side=tk.BOTTOM, pady=10)
     
+    def calculate_gold_value(self, weight, karat):
+        """Calculate gold value using the formula: weight * (karat / 750)"""
+        return weight * (karat / 750)
+    
+    def get_last_total_gold(self):
+        """Get the total_gold from the last transaction"""
+        transactions = self.load_transactions()
+        if not transactions:
+            return 0.0
+        return float(transactions[-1]['total_gold']) if transactions[-1]['total_gold'] is not None else 0.0
+    
     def open_buy_dialog(self):
         """Open dialog for buying gold"""
         dialog = tk.Toplevel(self.root)
@@ -147,10 +158,15 @@ class GoldTransactionApp:
                 note = note_entry.get()
                 date = datetime.now().strftime("%Y-%m-%d")
                 
-                self.save_transaction('buy', date, weight, karat,
-                                     price_per_gram, price_per_methqal, note)
+                # Calculate new total_gold
+                last_total = self.get_last_total_gold()
+                gold_value = self.calculate_gold_value(weight, karat)
+                new_total_gold = last_total + gold_value
                 
-                messagebox.showinfo("موفق", f"خرید ثبت شد. قیمت هر گرم: {price_per_gram:,.0f} تومان")
+                self.save_transaction('buy', date, weight, karat,
+                                     price_per_gram, price_per_methqal, note, new_total_gold)
+                
+                messagebox.showinfo("موفق", f"خرید ثبت شد. قیمت هر گرم: {price_per_gram:,.0f} تومان\nموجودی جدید: {new_total_gold:.4f} گرم طلای خالص")
                 dialog.destroy()
                 self.status_label.config(text="خرید جدید ثبت شد")
             except ValueError:
@@ -195,10 +211,19 @@ class GoldTransactionApp:
                 note = note_entry.get()
                 date = datetime.now().strftime("%Y-%m-%d")
                 
-                self.save_transaction('sell', date, weight, karat,
-                                     price_per_gram, '', note)
+                # Calculate new total_gold
+                last_total = self.get_last_total_gold()
+                gold_value = self.calculate_gold_value(weight, karat)
+                new_total_gold = last_total - gold_value
                 
-                messagebox.showinfo("موفق", "فروش ثبت شد")
+                # Check if selling more than available
+                if new_total_gold < 0:
+                    messagebox.showwarning("هشدار", f"موجودی فعلی: {last_total:.4f} گرم طلای خالص\nمقدار فروش: {gold_value:.4f} گرم طلای خالص\nموجودی منفی خواهد شد!")
+                
+                self.save_transaction('sell', date, weight, karat,
+                                     price_per_gram, '', note, new_total_gold)
+                
+                messagebox.showinfo("موفق", f"فروش ثبت شد\nموجودی جدید: {new_total_gold:.4f} گرم طلای خالص")
                 dialog.destroy()
                 self.status_label.config(text="فروش جدید ثبت شد")
             except ValueError:
@@ -208,18 +233,18 @@ class GoldTransactionApp:
                  bg='#f44336', fg='white', font=("Arial", 10, "bold")).pack(pady=20)
     
     def show_inventory(self):
-        """Show current inventory"""
-        total = 0.0
+        """Show current inventory based on latest record's total_gold"""
         transactions = self.load_transactions()
         
-        for t in transactions:
-            if t['type'] == 'buy':
-                total += float(t['weight'])
-            elif t['type'] == 'sell':
-                total -= float(t['weight'])
+        if not transactions:
+            messagebox.showinfo("موجودی", "هیچ تراکنشی یافت نشد")
+            return
         
-        messagebox.showinfo("موجودی", f"موجودی فعلی طلا: {total:.2f} گرم")
-        self.status_label.config(text=f"موجودی: {total:.2f} گرم")
+        # Get total_gold from the latest record
+        latest_total_gold = float(transactions[-1]['total_gold']) if transactions[-1]['total_gold'] is not None else 0.0
+        
+        messagebox.showinfo("موجودی", f"موجودی فعلی طلای خالص: {latest_total_gold:.4f} گرم")
+        self.status_label.config(text=f"موجودی: {latest_total_gold:.4f} گرم طلای خالص")
     
     def show_all_transactions(self):
         """Show all transactions in a new window"""
@@ -232,10 +257,10 @@ class GoldTransactionApp:
         # Create new window
         trans_window = tk.Toplevel(self.root)
         trans_window.title("تمام تراکنش‌ها")
-        trans_window.geometry("800x400")
+        trans_window.geometry("900x400")
         
         # Create treeview
-        tree = ttk.Treeview(trans_window, columns=('type', 'date', 'weight', 'karat', 'price_gram', 'price_methqal', 'note'), show='headings')
+        tree = ttk.Treeview(trans_window, columns=('type', 'date', 'weight', 'karat', 'price_gram', 'price_methqal', 'note', 'total_gold'), show='headings')
         
         # Define headings
         tree.heading('type', text='نوع')
@@ -245,6 +270,17 @@ class GoldTransactionApp:
         tree.heading('price_gram', text='قیمت/گرم')
         tree.heading('price_methqal', text='قیمت/مثقال')
         tree.heading('note', text='توضیح')
+        tree.heading('total_gold', text='موجودی کل')
+        
+        # Set column widths
+        tree.column('type', width=60)
+        tree.column('date', width=80)
+        tree.column('weight', width=70)
+        tree.column('karat', width=60)
+        tree.column('price_gram', width=90)
+        tree.column('price_methqal', width=100)
+        tree.column('note', width=150)
+        tree.column('total_gold', width=100)
         
         # Insert data
         for trans in transactions:
@@ -255,7 +291,8 @@ class GoldTransactionApp:
                 trans['karat'],
                 trans['price_per_gram'],
                 trans['price_per_methqal'],
-                trans['note']
+                trans['note'],
+                f"{float(trans['total_gold']):.4f}" if trans['total_gold'] is not None else "0.0000"
             ))
         
         tree.pack(fill='both', expand=True, padx=10, pady=10)
@@ -265,11 +302,11 @@ class GoldTransactionApp:
         tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side='right', fill='y')
     
-    def save_transaction(self, t_type, date, weight, karat, price_per_gram, price_per_methqal, note):
+    def save_transaction(self, t_type, date, weight, karat, price_per_gram, price_per_methqal, note, total_gold):
         """Save transaction to Excel file"""
         wb = openpyxl.load_workbook(self.FILE_NAME)
         ws = wb["Transactions"]
-        ws.append([t_type, date, weight, karat, price_per_gram, price_per_methqal, note])
+        ws.append([t_type, date, weight, karat, price_per_gram, price_per_methqal, note, total_gold])
         wb.save(self.FILE_NAME)
     
     def load_transactions(self):
@@ -291,7 +328,8 @@ class GoldTransactionApp:
                 'karat': row[3],
                 'price_per_gram': row[4],
                 'price_per_methqal': row[5],
-                'note': row[6]
+                'note': row[6],
+                'total_gold': row[7] if len(row) > 7 else 0.0
             })
         
         return transactions

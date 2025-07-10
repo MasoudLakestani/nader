@@ -272,7 +272,7 @@ class GoldTransactionApp:
                 if new_total_gold < 0:
                     messagebox.showwarning("هشدار", f"موجودی فعلی: {last_total:.4f} گرم طلای خالص\nمقدار فروش: {gold_value:.4f} گرم طلای خالص\nموجودی منفی خواهد شد!")
                 
-                self.save_transaction('sell', date, weight, karat, price_per_gram, '', 
+                self.save_transaction('sell', date, weight, karat, price_per_gram, price_per_methqal, 
                                     wage, profit, tax, total_price, note, new_total_gold)
                 
                 messagebox.showinfo("موفق", f"فروش ثبت شد\nقیمت کل: {total_price:,.0f} تومان\nموجودی جدید: {new_total_gold:.4f} گرم طلای خالص")

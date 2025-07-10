@@ -107,7 +107,7 @@ class GoldTransactionApp:
         exit_button.pack(pady=10)
         
         # Status label
-        self.status_label = tk.Label(self.root, text="آماده برای استفاده", 
+        self.status_label = tk.Label(self.root, text="Developed by masoud89", 
                                     font=("Arial", 10), bg='#f0f0f0')
         self.status_label.pack(side=tk.BOTTOM, pady=10)
     
@@ -223,7 +223,7 @@ class GoldTransactionApp:
         karat_entry.pack(pady=5)
         
         # Price per gram input
-        tk.Label(dialog, text="قیمت فروش هر گرم (تومان):", font=("Arial", 10), bg='#f0f0f0').pack(pady=5)
+        tk.Label(dialog, text="قیمت فروش هر مثقال (تومان):", font=("Arial", 10), bg='#f0f0f0').pack(pady=5)
         price_entry = tk.Entry(dialog, font=("Arial", 10))
         price_entry.pack(pady=5)
         
@@ -252,7 +252,8 @@ class GoldTransactionApp:
             try:
                 weight = float(weight_entry.get())
                 karat = int(karat_entry.get())
-                price_per_gram = float(price_entry.get())
+                price_per_methqal = float(price_entry.get())
+                price_per_gram = round(price_per_methqal / self.METHQAL_TO_GRAM, 2)
                 wage = float(wage_entry.get()) if wage_entry.get() else 0.0
                 profit = float(profit_entry.get()) if profit_entry.get() else 0.0
                 tax = float(tax_entry.get()) if tax_entry.get() else 0.0

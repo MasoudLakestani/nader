@@ -177,7 +177,7 @@ class GoldTransactionApp:
                 karat = int(karat_entry.get())
                 price_per_methqal = float(price_entry.get())
                 wage = float(wage_entry.get()) if wage_entry.get() else 0.0
-                price_per_gram = round(price_per_methqal / self.METHQAL_TO_GRAM, 2)
+                price_per_gram = round(price_per_methqal / self.METHQAL_TO_GRAM, 0)
                 note = note_entry.get()
                 date = datetime.now().strftime("%Y-%m-%d")
                 
@@ -253,7 +253,7 @@ class GoldTransactionApp:
                 weight = float(weight_entry.get())
                 karat = int(karat_entry.get())
                 price_per_methqal = float(price_entry.get())
-                price_per_gram = round(price_per_methqal / self.METHQAL_TO_GRAM, 2)
+                price_per_gram = round(price_per_methqal / self.METHQAL_TO_GRAM, 0)
                 wage = float(wage_entry.get()) if wage_entry.get() else 0.0
                 profit = float(profit_entry.get()) if profit_entry.get() else 0.0
                 tax = float(tax_entry.get()) if tax_entry.get() else 0.0
